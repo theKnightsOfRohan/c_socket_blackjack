@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <arpa/inet.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,18 +17,26 @@ int main() {
 
 	// ---------------------------------------------------------
 
-	int status, readlen;
+	int status, readlen, count = 0;
 
-	char *hello = "Hello from client";
+	char pong[] = "pong";
+
 	char buffer[1024] = {0};
 
-	status = send(client->socket, hello, strlen(hello), 0);
-	printf("Hello message sent\n");
+	while (true) {
+		readlen = read(client->socket, buffer, 1023);
 
-	// subtract 1 for the null terminator at the end
-	readlen = read(client->socket, buffer, sizeof(buffer) - 1);
+		printf("Received: %s.\n", buffer);
 
-	printf("%s\n", buffer);
+		if (strncmp(buffer, "ping", 4) == 0) {
+			count++;
+			printf("Received ping %d, sending pong\n", count);
+			send(client->socket, pong, sizeof(pong), 0);
+		} else if (strncmp(buffer, "term", 4) == 0) {
+			printf("Terminating client");
+			break;
+		}
+	}
 
 	// closing the connected socket
 	close(client->socket);
