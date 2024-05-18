@@ -36,9 +36,6 @@ void *handle_input(void *arg) {
 		printf("Input thread awaiting lock confirmation\n");
 		assert(pthread_mutex_lock(&input->lock) == 0);
 
-		input->buffer[0] = '\0';
-		// Do the weird clear thing
-		// fgets(input->buffer, sizeof(input->buffer) - 1, stdin);
-		// input->buffer[0] = '\0';
+		memset(input->buffer, '\0', sizeof(input->buffer));
 	}
 }

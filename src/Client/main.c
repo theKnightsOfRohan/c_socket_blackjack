@@ -48,7 +48,8 @@ int main() {
 				break;
 			}
 
-			input.buffer[0] = '\0';
+			memset(input.buffer, '\0', sizeof(input.buffer));
+
 			printf("Awaiting response...\n");
 
 			readlen = read_blocking(client->socket, socket_buffer, socket_buflen);
@@ -57,7 +58,7 @@ int main() {
 
 			pthread_mutex_unlock(&input.lock);
 			sleep(1);
-			socket_buffer[0] = '\0';
+			memset(socket_buffer, '\0', sizeof(socket_buffer));
 		} else {
 			assert(status == EBUSY);
 
@@ -71,23 +72,6 @@ int main() {
 				break;
 			}
 		}
-
-		/*
-				readlen = read(client->socket, buffer, 1023);
-
-				printf("Received: %s.\n", buffer);
-
-				if (strncmp(buffer, "ping", 4) == 0) {
-					count++;
-					printf("Received ping %d, sending pong\n", count);
-					send(client->socket, pong, sizeof(pong), 0);
-				} else if (strncmp(buffer, "term", 4) == 0) {
-					printf("Terminating client\n");
-					break;
-				} else {
-					printf("Received unknown message: %s\n", buffer);
-				}
-		*/
 	}
 
 	pthread_cancel(input_thread);

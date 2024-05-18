@@ -35,7 +35,7 @@ void *handle_client(void *arg) {
 		assert(send(GAME_STATE->client_sockets[self_desc], buffer, readlen, 0) > 0);
 
 		count++;
-		buffer[0] = '\0';
+		memset(buffer, '\0', sizeof(buffer));
 
 		if (count == 5) {
 			break;
