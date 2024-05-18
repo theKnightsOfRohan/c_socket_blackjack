@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +19,15 @@ void find_server(ClientSocket *self, const char *ip) {
 }
 
 void connect_to_server(ClientSocket *self) {
-	if (connect(self->socket, (struct sockaddr *)&self->server_addr,
-				sizeof(self->server_addr)) < 0) {
-
-		printf("error: %d\n", errno);
+	if (connect(self->socket, (struct sockaddr *)&self->server_addr, sizeof(self->server_addr)) <
+		0) {
+		printf("Server connection error: %d\n", errno);
 		exit(EXIT_FAILURE);
 	}
+
+	// Make the socket non-blocking
+	int flags = fcntl(self->socket, F_GETFL, 0);
+	fcntl(self->socket, F_SETFL, flags | O_NONBLOCK);
 }
 
 ClientSocket *new_client_socket() {
@@ -38,4 +42,18 @@ ClientSocket *new_client_socket() {
 	res->connect_to_server = &connect_to_server;
 
 	return res;
+}
+
+ssize_t read_blocking(socket_fd fd, char *buffer, int bufsize) {
+	ssize_t readlen;
+	while ((readlen = read(fd, buffer, bufsize)) < 0) {
+		if (errno == EAGAIN) {
+			continue;
+		} else {
+			printf("Read error: %d\n", errno);
+			break;
+		}
+	}
+
+	return readlen;
 }

@@ -36,7 +36,7 @@ int main() {
 		new_client = accept(server->socket, (struct sockaddr *)&server->in_addr, &server_size);
 
 		if (new_client < 0) {
-			printf("error: %d\n", errno);
+			printf("Client accept error: %d\n", errno);
 			exit(EXIT_FAILURE);
 		}
 

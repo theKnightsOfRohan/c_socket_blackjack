@@ -1,10 +1,10 @@
 #include "client_handler.h"
 #include "../globals.h"
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 void *handle_client(void *arg) {
@@ -15,29 +15,30 @@ void *handle_client(void *arg) {
 	char buffer[1024] = {0};
 	int bufferlen = sizeof(buffer) - 1;
 
-	clock_t start = clock(), curr;
-
 	int count = 0;
 
 	while (true) {
-		curr = clock();
+		readlen = read(GAME_STATE->client_sockets[self_desc], buffer, bufferlen);
+		if (readlen < 0) {
+			printf("Thread %d read error: %d\n", self_desc, errno);
+			break;
+		}
 
-		if (((double)curr - start) / CLOCKS_PER_SEC > 5) {
-			count++;
+		if (strncmp(buffer, "quit", 4) == 0) {
+			printf("Thread %d user quit\n", self_desc);
+			break;
+		}
 
-			start = curr;
+		printf("Thread %d received %s\n", self_desc, buffer);
 
-			printf("Thread %d ping #%d\n", self_desc, count);
-			assert(send(GAME_STATE->client_sockets[self_desc], "ping", 4, 0) > 0);
+		printf("Thread %d sending confirmation\n", self_desc);
+		assert(send(GAME_STATE->client_sockets[self_desc], buffer, readlen, 0) > 0);
 
-			readlen = read(GAME_STATE->client_sockets[self_desc], buffer, bufferlen);
+		count++;
+		buffer[0] = '\0';
 
-			assert(readlen >= 4);
-
-			printf("Thread %d received %s, should be pong\n", self_desc, buffer);
-
-			if (count == 5)
-				break;
+		if (count == 5) {
+			break;
 		}
 	}
 
