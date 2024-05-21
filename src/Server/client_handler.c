@@ -1,5 +1,5 @@
 #include "client_handler.h"
-#include "../globals.h"
+#include "socket_utils.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>

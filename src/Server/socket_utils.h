@@ -15,4 +15,14 @@ typedef struct ServerSocket {
 
 ServerSocket *new_server_socket();
 
+typedef struct GameState {
+	int client_count;
+	pthread_mutex_t mod_lock;
+	pthread_t *client_threads;
+	socket_fd *client_sockets;
+} GameState;
+
+// ODR DEEZ NUTZ
+GameState *GAME_STATE;
+
 #endif // SERVER_SOCKET_UTILS_H

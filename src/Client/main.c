@@ -14,7 +14,7 @@
 int main() {
 	ClientSocket *client = new_client_socket();
 
-	client->find_server(client, "127.0.0.1");
+	client->find_server(client, SERVER_IP);
 
 	client->connect_to_server(client);
 
