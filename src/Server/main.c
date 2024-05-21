@@ -17,7 +17,6 @@ int main() {
 	ServerSocket *server = new_server_socket();
 
 	GAME_STATE = malloc(sizeof(GameState));
-
 	GAME_STATE->client_count = 0;
 	GAME_STATE->client_threads = malloc(sizeof(pthread_t) * MAX_CLIENT_THREAD_COUNT);
 	pthread_mutex_init(&GAME_STATE->mod_lock, NULL);

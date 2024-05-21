@@ -32,6 +32,9 @@ int main() {
 	assert(pthread_mutex_init(&input.lock, NULL) == 0);
 	pthread_mutex_lock(&input.lock);
 
+	assert(pthread_mutex_init(&input.setup_lock, NULL) == 0);
+	pthread_mutex_lock(&input.setup_lock);
+
 	assert(pthread_create(&input_thread, NULL, handle_input, &input) == 0);
 
 	while (true) {
@@ -44,7 +47,7 @@ int main() {
 			}
 
 			if (strncmp(input.buffer, "quit", 4) == 0) {
-				printf("User quitting...");
+				printf("User quitting...\n");
 				break;
 			}
 
@@ -57,7 +60,8 @@ int main() {
 			printf("Received confirmation message %s from server\n", socket_buffer);
 
 			pthread_mutex_unlock(&input.lock);
-			sleep(1);
+			pthread_mutex_lock(&input.setup_lock);
+
 			memset(socket_buffer, '\0', sizeof(socket_buffer));
 		} else {
 			assert(status == EBUSY);

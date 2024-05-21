@@ -1,5 +1,4 @@
 #include "input_handler.h"
-#include "utils.h"
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
@@ -35,6 +34,7 @@ void *handle_input(void *arg) {
 
 		printf("Input thread awaiting lock confirmation\n");
 		assert(pthread_mutex_lock(&input->lock) == 0);
+		pthread_mutex_unlock(&input->setup_lock);
 
 		memset(input->buffer, '\0', sizeof(input->buffer));
 	}

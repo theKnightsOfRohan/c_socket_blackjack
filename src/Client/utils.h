@@ -15,11 +15,6 @@ typedef struct ClientSocket {
 
 ClientSocket *new_client_socket();
 
-typedef struct input_buffer {
-	pthread_mutex_t lock;
-	char buffer[1024];
-} input_buffer;
-
 ssize_t read_blocking(socket_fd fd, char *buffer, int bufsize);
 
 #endif // CLIENT_UTILS_H
