@@ -1,6 +1,6 @@
-#ifndef CLIENT_UTILS_H
+#ifndef CLIENT_SOCKET_UTILS_H
 
-#define CLIENT_UTILS_H
+#define CLIENT_SOCKET_UTILS_H
 
 #include "../globals.h"
 #include <netinet/in.h>
@@ -17,4 +17,4 @@ ClientSocket *new_client_socket();
 
 ssize_t read_blocking(socket_fd fd, char *buffer, int bufsize);
 
-#endif // CLIENT_UTILS_H
+#endif // CLIENT_SOCKET_UTILS_H

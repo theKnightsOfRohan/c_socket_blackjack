@@ -1,5 +1,5 @@
-#ifndef SERVER_UTILS_H
-#define SERVER_UTILS_H
+#ifndef SERVER_SOCKET_UTILS_H
+#define SERVER_SOCKET_UTILS_H
 
 #include "../globals.h"
 #include <netinet/in.h>
@@ -15,4 +15,4 @@ typedef struct ServerSocket {
 
 ServerSocket *new_server_socket();
 
-#endif // SERVER_UTILS_H
+#endif // SERVER_SOCKET_UTILS_H
