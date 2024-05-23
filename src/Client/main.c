@@ -57,12 +57,12 @@ int main() {
 
 			readlen = read_blocking(client->socket, socket_buffer, socket_buflen);
 
-			printf("Received confirmation message %s from server\n", socket_buffer);
+			printf("Received message from server:\n%s", socket_buffer);
+
+			memset(socket_buffer, '\0', sizeof(socket_buffer));
 
 			pthread_mutex_unlock(&input.lock);
 			pthread_mutex_lock(&input.setup_lock);
-
-			memset(socket_buffer, '\0', sizeof(socket_buffer));
 		} else {
 			assert(status == EBUSY);
 
