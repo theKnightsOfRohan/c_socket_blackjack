@@ -3,12 +3,27 @@
 
 #include "../globals.h"
 #include <pthread.h>
+#include <stdbool.h>
+
+typedef struct Player {
+	int id;
+	pthread_t thread;
+	socket_fd socket;
+	struct Player *next;
+	bool idle;
+} Player;
 
 typedef struct GameState {
 	int client_count;
+	int (*get_client_count)(void);
+	int client_id;
 	pthread_mutex_t mod_lock;
 	pthread_t *client_threads;
 	socket_fd *client_sockets;
+	Player *curr;
+	// Tail is figurative, as list is circular for turns
+	Player *tail;
+	bool terminate;
 } GameState;
 
 // ODR DEEZ NUTZ

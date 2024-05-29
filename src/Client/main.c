@@ -11,7 +11,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-int main() {
+int main(int argc, char *argv[]) {
+	log_open(argv[1]);
+
 	ClientSocket *client = new_client_socket();
 
 	client->find_server(client, SERVER_IP);
@@ -48,7 +50,6 @@ int main() {
 
 			if (strncmp(input.buffer, "quit", 4) == 0) {
 				printf("User quitting...\n");
-				break;
 			}
 
 			memset(input.buffer, '\0', sizeof(input.buffer));
@@ -57,7 +58,12 @@ int main() {
 
 			readlen = read_blocking(client->socket, socket_buffer, socket_buflen);
 
-			printf("Received message from server:\n%s", socket_buffer);
+			printf("Received message from server:\n%s\n", socket_buffer);
+
+			if (strncmp(socket_buffer, "term", 4) == 0) {
+				printf("Received termination request from server...\n");
+				break;
+			}
 
 			memset(socket_buffer, '\0', sizeof(socket_buffer));
 

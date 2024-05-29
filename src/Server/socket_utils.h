@@ -18,4 +18,10 @@ void terminate_client_threads();
 
 void add_client(socket_fd new_client);
 
+#define AWAIT_VALUE(ptr, val)                                                                      \
+	do {                                                                                           \
+		while (*(ptr) != (val)) {                                                                  \
+		}                                                                                          \
+	} while (0)
+
 #endif // SERVER_SOCKET_UTILS_H

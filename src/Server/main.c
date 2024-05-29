@@ -6,14 +6,22 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-int main() {
+int main(int argc, char *argv[]) {
+	if (argv[1] == NULL) {
+		printf("Usage: %s <log_file>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	log_open(argv[1]);
+
+	Log("[main] Starting server\n");
 	ServerSocket *server = new_server_socket();
 
+	Log("[main] Binding server\n");
 	init_game_state();
 
 	// ---------------------------------------------------------
@@ -22,23 +30,30 @@ int main() {
 	socket_fd new_client;
 
 	while (true) {
-		if (GAME_STATE->client_count > 3) {
+		if (GAME_STATE->terminate) {
+			Log("[main] Terminating server\n");
 			break;
 		}
 
 		new_client = accept(server->socket, (struct sockaddr *)&server->in_addr, &server_socklen);
 
 		if (new_client < 0) {
-			printf("Client accept error: %d\n", errno);
-			break;
+			if (errno == EAGAIN)
+				continue;
+			else {
+				Log("Client accept error: %d\n", errno);
+				break;
+			}
 		}
 
+		Log("[main] Client connected at socket %d\n", new_client);
 		add_client(new_client);
 	}
 
+	Log("[main] Terminating client threads\n");
 	terminate_client_threads();
 
-	printf("Terminating server\n");
+	Log("[main] Closing server\n");
 
 	// closing the listening socket
 	close(server->socket);

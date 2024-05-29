@@ -9,29 +9,30 @@
 #include <string.h>
 #include <unistd.h>
 
-char *handle_response(GS_Result *res) {
+char *handle_response(GS_Result *res, int thread_id) {
 	char *response;
 
 	switch (res->err) {
 
 	case REQ_SUCCESS:
 		response = res->res;
-		printf("Query was a success\n");
+		Log("[client{%d}.handle_response] Query was a success. Received \"%s\"\n", thread_id,
+			res->res);
 		break;
 
 	case REQ_BAD_FORMAT:
 		response = "Request format was incorrect\n";
-		printf("%s", response);
+		Log("[client{%d}.handle_response] %s", thread_id, response);
 		break;
 
 	case REQ_NOT_FOUND:
 		response = "Request type was not found\n";
-		printf("%s", response);
+		Log("[client{%d}.handle_response] %s", thread_id, response);
 		break;
 
 	default:
-		perror("UNREACHABLE\n");
-		printf("ERR: %d; RESPONSE: %s\n", res->err, res->res);
+		Log("[client{%d}.handle_response] UNREACHABLE. ERR: %d; RESPONSE: %s\n", thread_id,
+			res->err, res->res);
 		exit(EXIT_FAILURE);
 	}
 
@@ -39,50 +40,86 @@ char *handle_response(GS_Result *res) {
 }
 
 void *handle_client(void *arg) {
-	int self_desc = *(int *)arg;
+	Player *self = (Player *)arg;
+	self->idle = true;
 
 	ssize_t readlen;
 
-	char buffer[32] = {0};
+	char buffer[32] = {'\0'};
 	ssize_t bufferlen = sizeof(buffer) - 1;
 	GS_Result res;
 
-	int count = 0;
-
 	while (true) {
-		readlen = read(GAME_STATE->client_sockets[self_desc], buffer, bufferlen);
+		readlen = read(self->socket, buffer, bufferlen);
+
 		if (readlen < 0) {
-			printf("Thread %d read error: %d\n", self_desc, errno);
-			break;
+			if (errno == EAGAIN)
+				continue;
+			else {
+				Log("[client{%d}] read error: %d\n", self->id, errno);
+				break;
+			}
 		}
+
+		self->idle = false;
 
 		if (strncmp(buffer, "quit", 4) == 0) {
-			printf("Thread %d user quit\n", self_desc);
+			Log("[client{%d}] user quit\n", self->id);
 			break;
 		}
 
-		printf("Thread %d received %s.\n", self_desc, buffer);
+		Log("[client{%d}] received %s.\n", self->id, buffer);
 
 		res = execute_cmd(buffer, readlen);
-		char *response = handle_response(&res);
+		char *response = handle_response(&res, self->id);
 
-		printf("Thread %d sending result\n", self_desc);
-		assert(send(GAME_STATE->client_sockets[self_desc], response, strlen(response), 0) > 0);
+		Log("[client{%d}] sending result\n", self->id);
+		assert(send(self->socket, response, strlen(response), 0) > 0);
 
 		free(res.res);
 		res.res = NULL;
 
-		count++;
 		memset(buffer, '\0', sizeof(buffer));
 
-		if (count == 5) {
+		self->idle = true;
+
+		if (GAME_STATE->terminate) {
 			break;
 		}
 	}
 
-	printf("Thread %d terminating\n", self_desc);
+	Log("[client{%d}] terminating\n", self->id);
 
-	assert(send(GAME_STATE->client_sockets[self_desc], "term", 4, 0) > 0);
+	assert(send(self->socket, "term", 4, 0) == 4);
+
+	close(self->socket);
+
+	Player *self_ref = GAME_STATE->curr->next;
+	Player *prev = GAME_STATE->curr;
+
+	while (self_ref != self) {
+		self_ref = self_ref->next;
+		prev = prev->next;
+	}
+
+	if (GAME_STATE->get_client_count() == 1) {
+		GAME_STATE->curr = NULL;
+		GAME_STATE->tail = NULL;
+	}
+
+	prev->next = self_ref->next;
+
+	if (GAME_STATE->curr == self_ref) {
+		GAME_STATE->curr = GAME_STATE->curr->next;
+	}
+
+	free(self_ref);
+
+	Log("[client{%d}] thread terminated and removed from turn cycle\n", self->id);
+
+	self->idle = true;
+
+	pthread_exit(NULL);
 
 	return NULL;
 }
