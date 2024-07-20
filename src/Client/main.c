@@ -12,12 +12,21 @@
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
+	if (argv[1] == NULL) {
+		printf("Usage: %s <log_file>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
 	log_open(argv[1]);
+
+	Log("Starting client\n");
 
 	ClientSocket *client = new_client_socket();
 
+	Log("Finding server at %s\n", SERVER_IP);
 	client->find_server(client, SERVER_IP);
 
+	Log("Connecting to server at %s\n", SERVER_IP);
 	client->connect_to_server(client);
 
 	// ---------------------------------------------------------

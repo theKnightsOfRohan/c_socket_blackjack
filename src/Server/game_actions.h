@@ -1,5 +1,5 @@
-#ifndef GAME_HANDLER_H
-#define GAME_HANDLER_H
+#ifndef GAME_ACTIONS_H
+#define GAME_ACTIONS_H
 
 #include "../globals.h"
 #include <pthread.h>
@@ -14,8 +14,6 @@ typedef struct Player {
 } Player;
 
 typedef struct GameState {
-	int client_count;
-	int (*get_client_count)(void);
 	int client_id;
 	pthread_mutex_t mod_lock;
 	pthread_t *client_threads;
@@ -24,18 +22,14 @@ typedef struct GameState {
 	// Tail is figurative, as list is circular for turns
 	Player *tail;
 	bool terminate;
+	int (*get_client_count)(void);
+	bool (*next_turn)(void);
+	bool (*is_current_player)(Player *p);
 } GameState;
 
 // ODR DEEZ NUTZ
 GameState *GAME_STATE;
 
-typedef enum { REQ_SUCCESS, REQ_NOT_FOUND, REQ_BAD_FORMAT } GS_Error;
+void init_game_state(void);
 
-typedef struct GS_Result {
-	char *res;
-	GS_Error err;
-} GS_Result;
-
-GS_Result execute_cmd(char *cmd, int length);
-
-#endif // GAME_HANDLER_H
+#endif // GAME_ACTIONS_H

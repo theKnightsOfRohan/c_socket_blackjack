@@ -1,4 +1,4 @@
-#include "game_handler.h"
+#include "game_request_handler.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -7,8 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-GS_Result execute_req(char *req, char *arg, int arglen) {
-	Log("[execute_req] Request type: %s Arg: %s\n", req, arg);
+GS_Result execute_req(char *req, char *arg, int arglen, Player *player) {
+	Log("Request type: %s Arg: %s\n", req, arg);
 
 	GS_Result res;
 
@@ -19,7 +19,7 @@ GS_Result execute_req(char *req, char *arg, int arglen) {
 			return res;
 		}
 
-		Log("[execute_req] Getting client count\n");
+		Log("Getting client count\n");
 
 		res.res = malloc(sizeof(char) * 64);
 		sprintf(res.res, "Number of clients: %d", GAME_STATE->get_client_count());
@@ -33,7 +33,7 @@ GS_Result execute_req(char *req, char *arg, int arglen) {
 			return res;
 		}
 
-		Log("[execute_req] Getting current player\n");
+		Log("Getting current player\n");
 
 		res.res = malloc(sizeof(char) * 64);
 		sprintf(res.res, "Current turn player: %d", GAME_STATE->curr->id);
@@ -47,7 +47,7 @@ GS_Result execute_req(char *req, char *arg, int arglen) {
 			return res;
 		}
 
-		Log("[execute_req] Terminating server\n");
+		Log("Terminating server\n");
 
 		assert(pthread_mutex_lock(&GAME_STATE->mod_lock) == 0);
 
@@ -63,24 +63,24 @@ GS_Result execute_req(char *req, char *arg, int arglen) {
 		return res;
 
 	} else {
-		Log("[execute_req] UNREACHABLE\n");
+		Log("UNREACHABLE\n");
 
 		exit(EXIT_FAILURE);
 	}
 }
 
-GS_Result execute_cmd(char *cmd, int length) {
-	Log("[execute_req] Received raw cmd: %s.\n", cmd);
+GS_Result execute_cmd(char *cmd, int length, Player *player) {
+	Log("Received raw cmd: %s.\n", cmd);
 
 	if (cmd == NULL || length < 3)
 		return (GS_Result){.res = NULL, .err = REQ_BAD_FORMAT};
 
 	if (strncmp(cmd, "get", 3) == 0)
-		return execute_req("get", &cmd[3], length - 3);
+		return execute_req("get", &cmd[3], length - 3, player);
 	else if (strncmp(cmd, "curr", 4) == 0)
-		return execute_req("curr", &cmd[4], length - 4);
+		return execute_req("curr", &cmd[4], length - 4, player);
 	else if (strncmp(cmd, "TERM", 4) == 0)
-		return execute_req("TERM", &cmd[4], length - 4);
+		return execute_req("TERM", &cmd[4], length - 4, player);
 	else
 		return (GS_Result){.res = NULL, .err = REQ_NOT_FOUND};
 }

@@ -1,5 +1,5 @@
 #include "../globals.h"
-#include "game_handler.h"
+#include "game_actions.h"
 #include "socket_utils.h"
 #include <assert.h>
 #include <errno.h>
@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
 
 	log_open(argv[1]);
 
-	Log("[main] Starting server\n");
+	Log("Starting server\n");
 	ServerSocket *server = new_server_socket();
 
-	Log("[main] Binding server\n");
+	Log("Binding server\n");
 	init_game_state();
 
 	// ---------------------------------------------------------
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
 	while (true) {
 		if (GAME_STATE->terminate) {
-			Log("[main] Terminating server\n");
+			Log("Terminating server\n");
 			break;
 		}
 
@@ -46,14 +46,14 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		Log("[main] Client connected at socket %d\n", new_client);
+		Log("Client connected at socket %d\n", new_client);
 		add_client(new_client);
 	}
 
-	Log("[main] Terminating client threads\n");
+	Log("Terminating client threads\n");
 	terminate_client_threads();
 
-	Log("[main] Closing server\n");
+	Log("Closing server\n");
 
 	// closing the listening socket
 	close(server->socket);

@@ -22,7 +22,8 @@ void log_open(const char *log_file);
 void log_close();
 
 #define Log(fmt, ...)                                                                              \
-	fprintf(LOG_FILE_HANDLE, fmt, ##__VA_ARGS__);                                                  \
-	printf(fmt, ##__VA_ARGS__);
+	fprintf(LOG_FILE_HANDLE, "[%s.%s:%d] " fmt, __FILE_NAME__, __FUNCTION__, __LINE__,             \
+			##__VA_ARGS__);                                                                        \
+	printf("[%s.%s:%d] " fmt, __FILE_NAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 
 #endif // GLOBALS_H

@@ -12,8 +12,6 @@ typedef struct ServerSocket {
 
 ServerSocket *new_server_socket();
 
-void init_game_state();
-
 void terminate_client_threads();
 
 void add_client(socket_fd new_client);

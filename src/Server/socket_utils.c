@@ -1,7 +1,7 @@
 #include "socket_utils.h"
 #include "../globals.h"
 #include "client_handler.h"
-#include "game_handler.h"
+#include "game_actions.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -40,7 +40,7 @@ ServerSocket *new_server_socket() {
 void add_client(socket_fd new_client) {
 	int id = GAME_STATE->client_id;
 
-	Log("[main.add_client] Adding client %d. Locking.\n", id);
+	Log("Adding client %d. Locking.\n", id);
 
 	pthread_mutex_lock(&GAME_STATE->mod_lock);
 
@@ -49,12 +49,12 @@ void add_client(socket_fd new_client) {
 	new->id = id;
 
 	if (GAME_STATE->get_client_count() == 0) {
-		Log("[main.add_client] First client. Setting as current turn.\n");
+		Log("First client. Setting as current turn.\n");
 		GAME_STATE->curr = new;
 		GAME_STATE->tail = new;
 		GAME_STATE->tail->next = new;
 	} else {
-		Log("[main.add_client] Adding client %d to the end of the turn queue.\n", id);
+		Log("Adding client %d to the end of the turn queue.\n", id);
 		new->next = GAME_STATE->tail->next;
 		GAME_STATE->tail->next = new;
 		GAME_STATE->tail = new;
@@ -66,11 +66,11 @@ void add_client(socket_fd new_client) {
 
 	pthread_mutex_unlock(&GAME_STATE->mod_lock);
 
-	Log("[main.add_client] Client %d added. Unlocking.\n", id);
+	Log("Client %d added. Unlocking.\n", id);
 }
 
 void terminate_client(Player *player) {
-	Log("[client{%d}] terminating\n", player->id);
+	Log("client{%d}: terminating\n", player->id);
 
 	assert(send(player->socket, "term", 4, 0) == 4);
 
@@ -92,36 +92,38 @@ void terminate_client(Player *player) {
 	prev->next = player_ref->next;
 
 	if (GAME_STATE->curr == player_ref) {
-		GAME_STATE->curr = GAME_STATE->curr->next;
+		GAME_STATE->next_turn();
 	}
 
 	pthread_join(player->thread, NULL);
 
 	free(player_ref);
 
-	Log("[client{%d}] thread terminated and removed from turn cycle\n", player->id);
+	Log("client{%d}: thread terminated and removed from turn cycle\n", player->id);
 }
 
 void terminate_client_threads() {
-	Log("[main.terminate_client_threads] Terminating %d client handler threads. Locking.\n",
-		GAME_STATE->get_client_count());
+	Log("Terminating %d client handler threads. Locking.\n", GAME_STATE->get_client_count());
 
 	pthread_mutex_lock(&GAME_STATE->mod_lock);
 
 	Player *curr = GAME_STATE->curr;
 	Player *prev = NULL;
 
+	// FIX: THIS IS LITERALLY A MEMORY LEAK
+	// (But it works somehow idk)
+
 	do {
 		prev = curr;
 		curr = curr->next;
 
-		Log("[main.terminate_client_threads] Terminating client. Awaiting idle.\n");
+		Log("Terminating client. Awaiting idle.\n");
 		AWAIT_VALUE(&prev->idle, true);
 
-		Log("[main.terminate_client_threads] Client is idle. Terminating thread.\n");
+		Log("Client is idle. Terminating thread.\n");
 		pthread_join(prev->thread, NULL);
 
-		Log("[main.terminate_client_threads] Client %d thread terminated and removed from turn "
+		Log("Client %d thread terminated and removed from turn "
 			"cycle.\n",
 			prev->id);
 	} while (curr != GAME_STATE->curr);
@@ -130,31 +132,5 @@ void terminate_client_threads() {
 
 	pthread_mutex_unlock(&GAME_STATE->mod_lock);
 
-	Log("[main.terminate_client_threads] All client handler threads terminated. Unlocking.\n");
-}
-
-int get_client_count() {
-	if (GAME_STATE->curr == NULL)
-		return 0;
-
-	Player *curr = GAME_STATE->curr;
-	int size;
-
-	for (size = 1; curr->next != GAME_STATE->curr; curr = curr->next) {
-		size++;
-	}
-
-	return size;
-}
-
-void init_game_state() {
-	GAME_STATE = malloc(sizeof(GameState));
-	GAME_STATE->client_count = 0;
-	GAME_STATE->get_client_count = &get_client_count;
-	GAME_STATE->client_threads = malloc(sizeof(pthread_t) * MAX_CLIENT_THREAD_COUNT);
-	pthread_mutex_init(&GAME_STATE->mod_lock, NULL);
-	GAME_STATE->client_sockets = malloc(sizeof(socket_fd) * MAX_CLIENT_THREAD_COUNT);
-	GAME_STATE->curr = NULL;
-	GAME_STATE->tail = NULL;
-	GAME_STATE->terminate = false;
+	Log("All client handler threads terminated. Unlocking.\n");
 }

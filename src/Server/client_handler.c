@@ -1,5 +1,6 @@
 #include "client_handler.h"
-#include "game_handler.h"
+#include "game_actions.h"
+#include "game_request_handler.h"
 #include <assert.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -16,23 +17,21 @@ char *handle_response(GS_Result *res, int thread_id) {
 
 	case REQ_SUCCESS:
 		response = res->res;
-		Log("[client{%d}.handle_response] Query was a success. Received \"%s\"\n", thread_id,
-			res->res);
+		Log("client{%d}: Query was a success. Received \"%s\"\n", thread_id, res->res);
 		break;
 
 	case REQ_BAD_FORMAT:
 		response = "Request format was incorrect\n";
-		Log("[client{%d}.handle_response] %s", thread_id, response);
+		Log("client{%d}: %s", thread_id, response);
 		break;
 
 	case REQ_NOT_FOUND:
 		response = "Request type was not found\n";
-		Log("[client{%d}.handle_response] %s", thread_id, response);
+		Log("client{%d}: %s", thread_id, response);
 		break;
 
 	default:
-		Log("[client{%d}.handle_response] UNREACHABLE. ERR: %d; RESPONSE: %s\n", thread_id,
-			res->err, res->res);
+		Log("client{%d}: UNREACHABLE. ERR: %d; RESPONSE: %s\n", thread_id, res->err, res->res);
 		exit(EXIT_FAILURE);
 	}
 
@@ -56,7 +55,7 @@ void *handle_client(void *arg) {
 			if (errno == EAGAIN)
 				continue;
 			else {
-				Log("[client{%d}] read error: %d\n", self->id, errno);
+				Log("client{%d}: read error: %d\n", self->id, errno);
 				break;
 			}
 		}
@@ -64,16 +63,16 @@ void *handle_client(void *arg) {
 		self->idle = false;
 
 		if (strncmp(buffer, "quit", 4) == 0) {
-			Log("[client{%d}] user quit\n", self->id);
+			Log("client{%d}: user quit\n", self->id);
 			break;
 		}
 
-		Log("[client{%d}] received %s.\n", self->id, buffer);
+		Log("client{%d}: received %s.\n", self->id, buffer);
 
-		res = execute_cmd(buffer, readlen);
+		res = execute_cmd(buffer, readlen, self);
 		char *response = handle_response(&res, self->id);
 
-		Log("[client{%d}] sending result\n", self->id);
+		Log("client{%d}: sending result\n", self->id);
 		assert(send(self->socket, response, strlen(response), 0) > 0);
 
 		free(res.res);
@@ -88,7 +87,7 @@ void *handle_client(void *arg) {
 		}
 	}
 
-	Log("[client{%d}] terminating\n", self->id);
+	Log("client{%d}: terminating\n", self->id);
 
 	assert(send(self->socket, "term", 4, 0) == 4);
 
@@ -110,12 +109,12 @@ void *handle_client(void *arg) {
 	prev->next = self_ref->next;
 
 	if (GAME_STATE->curr == self_ref) {
-		GAME_STATE->curr = GAME_STATE->curr->next;
+		GAME_STATE->next_turn();
 	}
 
 	free(self_ref);
 
-	Log("[client{%d}] thread terminated and removed from turn cycle\n", self->id);
+	Log("client{%d}: thread terminated and removed from turn cycle\n", self->id);
 
 	self->idle = true;
 
