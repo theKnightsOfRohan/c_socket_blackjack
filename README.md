@@ -1,1 +1,1 @@
-# c_socket_playground
+# c_socket_blackjack
