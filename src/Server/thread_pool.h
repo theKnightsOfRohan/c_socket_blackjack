@@ -36,11 +36,4 @@ typedef struct ThreadPool {
 
 ThreadPool *tpool_init(size_t thread_count);
 
-#define smodify(block, mutex_ptr)                                              \
-	do {                                                                       \
-		pthread_mutex_lock(mutex_ptr);                                         \
-		block;                                                                 \
-		pthread_mutex_unlock(mutex_ptr);                                       \
-	} while (false);
-
 #endif // THREAD_POOL_H

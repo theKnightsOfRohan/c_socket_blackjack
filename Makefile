@@ -52,7 +52,7 @@ run:
 	./bin/$(SIDE) $(LOG_FILE)
 
 run_test:
-	./bin/test/$(SIDE) $(LOG_FILE)
+	./bin/test/$(SIDE) test/$(SIDE)/$(LOG_FILE)
 
 debug:
 	make build

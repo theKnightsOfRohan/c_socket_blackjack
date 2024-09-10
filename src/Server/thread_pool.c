@@ -63,7 +63,6 @@ void *tpool_worker_start(void *arg) {
 	return NULL;
 }
 
-// true = added work, false = did not add work
 void tpool_add_work(ThreadPool *self, thread_func func, void *arg) {
 	struct tpool_work *new_work = smalloc(sizeof(struct tpool_work));
 	new_work->arg = arg;
@@ -94,7 +93,7 @@ void tpool_add_work(ThreadPool *self, thread_func func, void *arg) {
 }
 
 void tpool_wait(ThreadPool *self) {
-	Log("Thread pool waiting threa\n");
+	Log("Thread pool waiting threads\n");
 
 	while (self->work_queue_head != NULL) {
 		continue;

@@ -48,4 +48,11 @@ pthread_mutex_t LOG_LOCK;
 		pthread_mutex_unlock(&LOG_LOCK);                                       \
 	}
 
+#define smodify(block, mutex_ptr)                                              \
+	{                                                                          \
+		pthread_mutex_lock(mutex_ptr);                                         \
+		block;                                                                 \
+		pthread_mutex_unlock(mutex_ptr);                                       \
+	}
+
 #endif // GLOBALS_H
